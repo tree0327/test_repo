@@ -35,9 +35,7 @@
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   padding: 18px 0;
 }
-@media (prefers-color-scheme: dark) {
-  .record-item { border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
-}
+
 
 .record-item:last-child {
   border-bottom: none;

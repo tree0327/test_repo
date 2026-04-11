@@ -28,9 +28,6 @@
   box-shadow: var(--shadow-sm);
   border: 1px solid rgba(0, 0, 0, 0.05);
 }
-@media (prefers-color-scheme: dark) {
-  .btn-all-records { border: 1px solid rgba(255, 255, 255, 0.05); }
-}
 
 .main-buttons {
   display: flex;
@@ -86,12 +83,6 @@
 .bottom-bar:active {
   transform: scale(0.96);
   background-color: rgba(0, 0, 0, 0.02);
-}
-
-@media (prefers-color-scheme: dark) {
-  .bottom-bar:active {
-    background-color: rgba(255, 255, 255, 0.05);
-  }
 }
 
 .total-label {
