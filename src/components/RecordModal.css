@@ -1,0 +1,171 @@
+.record-modal-backdrop {
+  align-items: center;
+  padding: 20px;
+}
+
+.record-modal-content {
+  height: 85vh;
+  padding: 24px 20px;
+}
+
+.record-list {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 20px;
+  padding-right: 5px;
+  /* Scrollbar styling */
+}
+
+.record-list::-webkit-scrollbar {
+  width: 6px;
+}
+.record-list::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.2);
+  border-radius: 10px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 0;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.record-item {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 18px 0;
+}
+@media (prefers-color-scheme: dark) {
+  .record-item { border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+}
+
+.record-item:last-child {
+  border-bottom: none;
+}
+
+.record-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.type-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.type-badge {
+  font-size: 13px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 6px;
+  color: white;
+}
+
+.type-badge.cash { background-color: var(--success); }
+.type-badge.card { background-color: var(--primary); }
+
+.customer-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--input-bg);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.final-amt {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.sub-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.action-btns {
+  display: flex;
+  gap: 8px;
+}
+
+.action-btn {
+  padding: 6px 14px;
+  font-size: 13px;
+  border-radius: 6px;
+  font-weight: 700;
+}
+
+.btn-edit { background-color: var(--input-bg); color: var(--text-primary); }
+.btn-delete { background-color: rgba(255, 59, 48, 0.1); color: var(--danger); }
+
+/* Accordion */
+.accordion-group {
+  margin-bottom: 12px;
+}
+
+.accordion {
+  background-color: var(--input-bg);
+  width: 100%;
+  padding: 18px 20px;
+  border-radius: var(--border-radius-sm);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background-color 0.2s;
+}
+
+.accordion:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.accordion-title {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.month-badge {
+  font-size: 13px;
+  color: var(--primary);
+  font-weight: 800;
+}
+
+.period-label {
+  font-size: 15px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.accordion-total {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.panel {
+  padding: 0 10px;
+  background-color: transparent;
+  margin-bottom: 15px;
+}
+
+.slide-down {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.btn-close {
+  background-color: var(--text-primary);
+  color: var(--bg-color);
+  width: 100%;
+  padding: 18px;
+  border-radius: var(--border-radius-sm);
+  font-size: 17px;
+  font-weight: 700;
+}

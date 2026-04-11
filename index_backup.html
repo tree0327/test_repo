@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="매출관리">
+    <title>매출 관리</title>
+    <style>
+        /* 아이폰 노치 및 홈바 여백(Safe Area) 완벽 대응, 텍스트 선택 방지 */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: max(20px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom)) 20px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            box-sizing: border-box;
+            background-color: #f2f2f7;
+            color: #1c1c1e;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        /* input 태그는 텍스트 입력해야 하니 선택 풀기 */
+        input {
+            -webkit-user-select: auto;
+            user-select: auto;
+        }
+
+        /* 아이폰 터치 시 깜빡이는 음영 제거 */
+        button {
+            cursor: pointer;
+            border: none;
+            outline: none;
+            font-family: inherit;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        #top-bar {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 20px;
+        }
+
+        #record-btn {
+            padding: 10px 20px;
+            background-color: #ffffff;
+            color: #007aff;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            transition: opacity 0.2s;
+        }
+
+        #record-btn:active {
+            opacity: 0.6;
+        }
+
+        #main-buttons {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            flex: 1;
+            align-items: center;
+        }
+
+        .sq-btn {
+            flex: 1;
+            aspect-ratio: 1 / 1;
+            font-size: 26px;
+            font-weight: 700;
+            color: white;
+            border-radius: 28px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+            transition: transform 0.1s;
+        }
+
+        .sq-btn:active {
+            transform: scale(0.94);
+        }
+
+        #cash-btn {
+            background: linear-gradient(135deg, #34c759, #28a745);
+        }
+
+        #card-btn {
+            background: linear-gradient(135deg, #007aff, #0056b3);
+        }
+
+        #bottom-bar {
+            padding: 30px 20px;
+            background-color: white;
+            border-radius: 24px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+            margin-top: 20px;
+            transition: transform 0.1s, background-color 0.2s;
+        }
+
+        #bottom-bar:active {
+            transform: scale(0.96);
+            background-color: #f8f8f8;
+        }
+
+        .total-label {
+            font-size: 15px;
+            color: #8e8e93;
+            font-weight: 600;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        #total-sales {
+            font-size: 40px;
+            font-weight: 800;
+            color: #1c1c1e;
+            letter-spacing: -1px;
+        }
+
+        .click-hint {
+            font-size: 13px;
+            color: #aeaeb2;
+            margin-top: 10px;
+            display: block;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            justify-content: center;
+            align-items: flex-end;
+            z-index: 100;
+            padding-bottom: max(20px, env(safe-area-inset-bottom));
+            box-sizing: border-box;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 28px;
+            width: 92%;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.15);
+            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+            }
+
+            to {
+                transform: translateY(0);
+            }
+        }
+
+        .modal-content h3 {
+            margin: 0 0 20px 0;
+            text-align: center;
+            font-size: 20px;
+            font-weight: 700;
+            color: #1c1c1e;
+        }
+
+        .modal-content input {
+            width: 100%;
+            padding: 18px;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+            font-size: 28px;
+            text-align: right;
+            border: none;
+            border-radius: 16px;
+            background-color: #f2f2f7;
+            font-weight: 700;
+            color: #1c1c1e;
+            caret-color: #007aff;
+        }
+
+        .modal-content input:focus {
+            outline: 2px solid #007aff;
+            background-color: white;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-group button {
+            flex: 1;
+            padding: 18px;
+            font-size: 17px;
+            font-weight: 600;
+            border-radius: 18px;
+        }
+
+        .btn-save {
+            background-color: #1c1c1e;
+            color: white;
+        }
+
+        .btn-cancel {
+            background-color: #e5e5ea;
+            color: #1c1c1e;
+        }
+
+        #record-list {
+            overflow-y: auto;
+            flex: 1;
+            margin-bottom: 20px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .accordion {
+            background-color: #f2f2f7;
+            color: #1c1c1e;
+            padding: 18px;
+            width: 100%;
+            text-align: left;
+            font-size: 16px;
+            border-radius: 16px;
+            margin-bottom: 10px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .accordion-title {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .accordion-title .month-badge {
+            font-size: 13px;
+            color: #007aff;
+            font-weight: 700;
+        }
+
+        .accordion-title .period-label {
+            font-size: 14px;
+            color: #8e8e93;
+            font-weight: 500;
+        }
+
+        .accordion-total {
+            font-size: 18px;
+            color: #1c1c1e;
+        }
+
+        .panel {
+            padding: 0 10px;
+            display: none;
+            background-color: white;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .record-item {
+            border-bottom: 1px solid #e5e5ea;
+            padding: 16px 0;
+        }
+
+        .record-item:last-child {
+            border-bottom: none;
+        }
+
+        .record-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .type-label {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1c1c1e;
+        }
+
+        .final-amt {
+            font-size: 17px;
+            font-weight: 700;
+            color: #1c1c1e;
+        }
+
+        .sub-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            color: #8e8e93;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            font-size: 13px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        .btn-edit {
+            background-color: #e5e5ea;
+            color: #1c1c1e;
+        }
+
+        .btn-delete {
+            background-color: #ff3b30;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="top-bar">
+        <button id="record-btn" onclick="showAllRecords()">전체 기록</button>
+    </div>
+
+    <div id="main-buttons">
+        <button id="cash-btn" class="sq-btn" onclick="openInput('현금')">현금</button>
+        <button id="card-btn" class="sq-btn" onclick="openInput('카드')">카드</button>
+    </div>
+
+    <div id="bottom-bar" onclick="showCurrentMonthRecords()">
+        <span class="total-label">이번 달 누적 매출</span>
+        <span id="total-sales">0</span> <span style="font-size: 20px; font-weight: 700;">원</span>
+        <span class="click-hint">터치해서 기록 확인 및 수정</span>
+    </div>
+
+    <div id="input-modal" class="modal" style="z-index: 110;">
+        <div class="modal-content">
+            <h3 id="input-title">매출 입력</h3>
+            <input type="number" id="amount-input" inputmode="numeric" pattern="[0-9]*" placeholder="0">
+            <div class="btn-group">
+                <button class="btn-cancel" onclick="closeInputModal()">취소</button>
+                <button class="btn-save" onclick="saveSales()">저장</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="record-modal" class="modal">
+        <div class="modal-content">
+            <h3 id="record-modal-title">전체 매출 기록</h3>
+            <div id="record-list"></div>
+            <div class="btn-group">
+                <button class="btn-cancel" onclick="closeModal('record-modal')"
+                    style="background-color: #1c1c1e; color: white;">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentType = '';
+        let editingId = null;
+        let currentView = '';
+        let salesData = JSON.parse(localStorage.getItem('salesData')) || [];
+
+        function openInput(type, isEdit = false, id = null, originalAmt = '') {
+            currentType = type;
+            editingId = isEdit ? id : null;
+            document.getElementById('input-title').innerText = type + (isEdit ? ' 매출 수정' : ' 매출 입력');
+            document.getElementById('amount-input').value = originalAmt;
+            document.getElementById('input-modal').style.display = 'flex';
+            // 아이폰에서 키보드 부드럽게 올라오도록 딜레이 조정
+            setTimeout(() => document.getElementById('amount-input').focus(), 300);
+        }
+
+        function closeInputModal() {
+            document.getElementById('input-modal').style.display = 'none';
+            editingId = null;
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+            currentView = '';
+        }
+
+        function saveSales() {
+            const inputVal = document.getElementById('amount-input').value;
+            if (!inputVal) return;
+
+            const originalAmount = parseInt(inputVal);
+            const finalAmount = currentType === '현금' ? originalAmount : Math.floor(originalAmount * 0.9);
+
+            if (editingId) {
+                const index = salesData.findIndex(item => item.id === editingId);
+                if (index !== -1) {
+                    salesData[index].original = originalAmount;
+                    salesData[index].final = finalAmount;
+                }
+            } else {
+                const record = {
+                    id: Date.now(),
+                    date: new Date().toISOString(),
+                    type: currentType,
+                    original: originalAmount,
+                    final: finalAmount
+                };
+                salesData.push(record);
+            }
+
+            localStorage.setItem('salesData', JSON.stringify(salesData));
+            closeInputModal();
+            updateTotal();
+
+            if (currentView === 'current') showCurrentMonthRecords();
+            else if (currentView === 'all') showAllRecords();
+        }
+
+        function deleteRecord(id) {
+            if (!confirm('정말 삭제할까?')) return;
+
+            salesData = salesData.filter(item => item.id !== id);
+            localStorage.setItem('salesData', JSON.stringify(salesData));
+
+            updateTotal();
+            if (currentView === 'current') showCurrentMonthRecords();
+        }
+
+        function getSalesPeriod() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            const date = now.getDate();
+
+            let start, end;
+            if (date <= 10) {
+                start = new Date(year, month - 1, 11, 0, 0, 0);
+                end = new Date(year, month, 10, 23, 59, 59);
+            } else {
+                start = new Date(year, month, 11, 0, 0, 0);
+                end = new Date(year, month + 1, 10, 23, 59, 59);
+            }
+            return { start, end };
+        }
+
+        function updateTotal() {
+            const period = getSalesPeriod();
+            let total = 0;
+
+            salesData.forEach(item => {
+                const itemDate = new Date(item.date);
+                if (itemDate >= period.start && itemDate <= period.end) {
+                    total += item.final;
+                }
+            });
+
+            document.getElementById('total-sales').innerText = total.toLocaleString();
+        }
+
+        function showCurrentMonthRecords() {
+            currentView = 'current';
+            document.getElementById('record-modal-title').innerText = '이번 달 상세 기록';
+            const list = document.getElementById('record-list');
+            list.innerHTML = '';
+
+            const period = getSalesPeriod();
+            const currentData = salesData.filter(item => {
+                const dt = new Date(item.date);
+                return dt >= period.start && dt <= period.end;
+            }).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            if (currentData.length === 0) {
+                list.innerHTML = '<div style="text-align:center; padding: 40px 0; color:#8e8e93;">기록이 없어.</div>';
+            } else {
+                currentData.forEach(item => {
+                    const dt = new Date(item.date);
+                    const dateStr = String(dt.getMonth() + 1).padStart(2, '0') + '/' +
+                        String(dt.getDate()).padStart(2, '0') + ' ' +
+                        String(dt.getHours()).padStart(2, '0') + ':' +
+                        String(dt.getMinutes()).padStart(2, '0');
+
+                    const div = document.createElement('div');
+                    div.className = 'record-item';
+                    div.innerHTML = `
+          <div class="record-row">
+            <span class="type-label">${item.type}</span>
+            <span class="final-amt">${item.final.toLocaleString()}원</span>
+          </div>
+          <div class="sub-row">
+            <span>${dateStr} (입력: ${item.original.toLocaleString()})</span>
+            <div class="action-btns">
+              <button class="action-btn btn-edit" onclick="openInput('${item.type}', true, ${item.id}, ${item.original})">수정</button>
+              <button class="action-btn btn-delete" onclick="deleteRecord(${item.id})">삭제</button>
+            </div>
+          </div>
+        `;
+                    list.appendChild(div);
+                });
+            }
+            document.getElementById('record-modal').style.display = 'flex';
+        }
+
+        function getPeriodKey(dateString) {
+            const dt = new Date(dateString);
+            let y = dt.getFullYear();
+            let m = dt.getMonth();
+            let d = dt.getDate();
+            if (d <= 10) {
+                m -= 1;
+                if (m < 0) { m = 11; y -= 1; }
+            }
+            return `${y}-${String(m + 1).padStart(2, '0')}`;
+        }
+
+        function showAllRecords() {
+            currentView = 'all';
+            document.getElementById('record-modal-title').innerText = '전체 매출 기록';
+            const list = document.getElementById('record-list');
+            list.innerHTML = '';
+
+            if (salesData.length === 0) {
+                list.innerHTML = '<div style="text-align:center; padding: 40px 0; color:#8e8e93;">기록이 없어.</div>';
+                document.getElementById('record-modal').style.display = 'flex';
+                return;
+            }
+
+            const groups = {};
+            salesData.forEach(item => {
+                const key = getPeriodKey(item.date);
+                if (!groups[key]) groups[key] = [];
+                groups[key].push(item);
+            });
+
+            const sortedKeys = Object.keys(groups).sort();
+
+            [...sortedKeys].reverse().forEach(key => {
+                const monthIndex = sortedKeys.indexOf(key) + 1;
+                const periodItems = groups[key].sort((a, b) => new Date(b.date) - new Date(a.date));
+                const periodTotal = periodItems.reduce((sum, item) => sum + item.final, 0);
+                const [year, month] = key.split('-');
+
+                const btn = document.createElement('button');
+                btn.className = 'accordion';
+                btn.innerHTML = `
+        <div class="accordion-title">
+          <span class="month-badge">${monthIndex}개월차</span>
+          <span class="period-label">${year}년 ${parseInt(month)}월 주기</span>
+        </div>
+        <span class="accordion-total">${periodTotal.toLocaleString()}원</span>
+      `;
+
+                const panel = document.createElement('div');
+                panel.className = 'panel';
+
+                periodItems.forEach(item => {
+                    const dt = new Date(item.date);
+                    const dateStr = String(dt.getMonth() + 1).padStart(2, '0') + '/' +
+                        String(dt.getDate()).padStart(2, '0') + ' ' +
+                        String(dt.getHours()).padStart(2, '0') + ':' +
+                        String(dt.getMinutes()).padStart(2, '0');
+
+                    const div = document.createElement('div');
+                    div.className = 'record-item';
+                    div.innerHTML = `
+          <div class="record-row">
+            <span class="type-label">${item.type}</span>
+            <span class="final-amt">${item.final.toLocaleString()}원</span>
+          </div>
+          <div class="sub-row">
+            <span>${dateStr}</span>
+            <span>입력: ${item.original.toLocaleString()}원</span>
+          </div>
+        `;
+                    panel.appendChild(div);
+                });
+
+                btn.onclick = function () {
+                    panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+                };
+
+                list.appendChild(btn);
+                list.appendChild(panel);
+            });
+
+            document.getElementById('record-modal').style.display = 'flex';
+        }
+
+        updateTotal();
+    </script>
+</body>
+
+</html>
