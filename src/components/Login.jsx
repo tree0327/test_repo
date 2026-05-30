@@ -5,6 +5,14 @@ import './Login.css';
 // 이메일 + 비밀번호 로그인.
 // signInWithPassword 는 계정을 자동 생성하지 않으므로,
 // DB(대시보드)에 미리 등록해 둔 계정만 로그인할 수 있다(가입 경로 없음).
+// 아이디만 입력해도 되도록: '@' 가 없으면 관리자 도메인을 붙인다.
+// 예) "admin" -> "admin@moha.local". 직원은 이메일을 그대로 입력.
+const ADMIN_DOMAIN = '@moha.local';
+function toEmail(input) {
+  const v = input.trim();
+  return v.includes('@') ? v : v + ADMIN_DOMAIN;
+}
+
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -16,7 +24,10 @@ export default function Login() {
     if (!email || !password) return;
     setStatus('submitting');
     setMessage('');
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({
+      email: toEmail(email),
+      password,
+    });
     if (error) {
       setStatus('error');
       setMessage('로그인에 실패했습니다. 이메일 또는 비밀번호를 확인하세요.');
@@ -32,8 +43,8 @@ export default function Login() {
 
         <form className="login-form" onSubmit={handleSubmit}>
           <input
-            type="email"
-            placeholder="이메일 주소"
+            type="text"
+            placeholder="아이디 또는 이메일"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             autoComplete="username"
