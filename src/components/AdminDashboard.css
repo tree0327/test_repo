@@ -1,0 +1,56 @@
+.admin {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 40px;
+  overflow-y: auto;
+  height: 100%;
+}
+.admin-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+.kpi-card {
+  background: var(--card-bg);
+  border-radius: var(--border-radius-md);
+  padding: 14px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.kpi-card span { font-size: 12px; color: var(--text-secondary); font-weight: 600; }
+.kpi-card strong { font-size: 18px; font-weight: 800; }
+.kpi-card strong.up { color: var(--success); }
+.kpi-card strong.down { color: var(--danger); }
+.admin-section {
+  background: var(--card-bg);
+  border-radius: var(--border-radius-md);
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+}
+.admin-section h2 { font-size: 15px; font-weight: 800; margin: 0 0 12px; }
+.compare-row { display: flex; gap: 10px; }
+.compare-row > div { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.compare-row span { font-size: 12px; color: var(--text-secondary); }
+.compare-row strong { font-size: 15px; font-weight: 800; }
+.goal-row { display: flex; gap: 10px; align-items: center; }
+.goal-row input { flex: 1; padding: 10px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.1); font-size: 15px; }
+.progress { height: 10px; background: var(--input-bg); border-radius: 6px; margin-top: 10px; overflow: hidden; }
+.progress-bar { height: 100%; background: var(--primary); }
+.rank-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.rank-list li { display: flex; justify-content: space-between; font-size: 14px; }
+.rank-list strong { font-weight: 800; }
+.range-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+.range-row input { flex: 1; padding: 10px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.1); }
+.btn-csv {
+  width: 100%; padding: 14px; background: var(--text-primary); color: var(--bg-color);
+  border-radius: var(--border-radius-sm); font-size: 15px; font-weight: 700;
+}
+.muted { color: var(--text-secondary); font-size: 13px; margin: 8px 0 0; }
