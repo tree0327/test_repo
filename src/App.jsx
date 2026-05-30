@@ -16,9 +16,11 @@ function App() {
   const handleBackup = async () => {
     setBackingUp(true);
     try {
-      const { found, error } = await backupLocalToDb();
+      const { found, error, already } = await backupLocalToDb();
       if (error) {
         showAlert('백업 실패', `DB 저장 중 오류가 발생했습니다: ${error}`);
+      } else if (already) {
+        showAlert('백업', '이미 백업이 완료된 기기입니다.');
       } else if (found === 0) {
         showAlert('백업', '이 기기에서 올릴 기존 기록이 없습니다.');
       } else {

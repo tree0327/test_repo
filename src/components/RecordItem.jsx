@@ -1,8 +1,9 @@
+// YY.MM.DD HH:MM 형식 (예: 26.05.30 14:05)
 function formatDateTime(isoString) {
   const dt = new Date(isoString);
-  return `${String(dt.getMonth() + 1).padStart(2, '0')}/${String(dt.getDate()).padStart(2, '0')} ${String(
-    dt.getHours()
-  ).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`;
+  const p = (n) => String(n).padStart(2, '0');
+  const yy = String(dt.getFullYear()).slice(2);
+  return `${yy}.${p(dt.getMonth() + 1)}.${p(dt.getDate())} ${p(dt.getHours())}:${p(dt.getMinutes())}`;
 }
 
 export default function RecordItem({ item, showActions = true, onEdit, onDelete }) {

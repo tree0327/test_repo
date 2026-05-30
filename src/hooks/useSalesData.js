@@ -2,12 +2,25 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase, RECORDS_TABLE } from '../supabaseClient';
 
 // 주 저장소: Supabase. localStorage 는 오프라인 캐시 + 기존 데이터 1회 마이그레이션.
+// id 는 DB가 자동 증가(인덱스 번호)로 생성하므로, 클라이언트는 id 를 만들어 보내지 않는다.
 const CACHE_KEY = 'salesData';
 const MIGRATION_FLAG = 'salesData_migrated_to_supabase';
 
 // 결제수단별 최종액: 현금=원금, 카드=수수료 10% 차감
 function computeFinal(type, original) {
   return type === '현금' ? original : Math.floor(original * 0.9);
+}
+
+// localStorage 기록 → DB insert 페이로드(id 제외, DB가 생성)
+function toPayload(r) {
+  const original = Number(r.original) || 0;
+  return {
+    type: r.type,
+    original,
+    final: Number(r.final ?? computeFinal(r.type, original)),
+    name: r.name || '',
+    date: r.date,
+  };
 }
 
 function readCache() {
@@ -51,7 +64,6 @@ export const useSalesData = () => {
       if (cancelled) return;
 
       if (fetchErr) {
-        // DB 연결 실패 시 로컬 캐시 유지(폴백)
         setError(fetchErr.message);
         setLoading(false);
         return;
@@ -61,36 +73,17 @@ export const useSalesData = () => {
       const localRows = readCache();
       const alreadyMigrated = window.localStorage.getItem(MIGRATION_FLAG);
 
-      // 이 기기에 남아 있던 기존 기록을 DB로 1회 적재(병합).
-      // DB 상태와 무관하게, id 기준 upsert 로 "로컬에만 있던 기록"을 올린다.
-      // (DB에 이미 있는 id 는 ignoreDuplicates 로 건드리지 않음 → 기존 흐름 유지)
-      if (localRows.length > 0 && !alreadyMigrated) {
-        const toUpsert = localRows.map((r) => {
-          const original = Number(r.original) || 0;
-          return {
-            id: String(r.id),
-            type: r.type,
-            original,
-            final: Number(r.final ?? computeFinal(r.type, original)),
-            name: r.name || '',
-            date: r.date,
-          };
-        });
-        const { error: upErr } = await supabase
+      if (rows.length === 0 && localRows.length > 0 && !alreadyMigrated) {
+        const { data: inserted, error: insErr } = await supabase
           .from(RECORDS_TABLE)
-          .upsert(toUpsert, { onConflict: 'id', ignoreDuplicates: true });
+          .insert(localRows.map(toPayload))
+          .select();
         if (cancelled) return;
-        if (upErr) {
-          setError(upErr.message);
+        if (insErr) {
+          setError(insErr.message);
         } else {
           window.localStorage.setItem(MIGRATION_FLAG, '1');
-          // 병합 결과를 반영해 다시 로드
-          const { data: reloaded } = await supabase
-            .from(RECORDS_TABLE)
-            .select('*')
-            .order('date', { ascending: false });
-          if (cancelled) return;
-          rows = reloaded ?? rows;
+          rows = (inserted ?? []).sort((a, b) => new Date(b.date) - new Date(a.date));
         }
       }
 
@@ -106,27 +99,25 @@ export const useSalesData = () => {
   const addRecord = useCallback(
     async (type, originalAmount, name = '', dateISO = null) => {
       const original = Number(originalAmount) || 0;
-      const record = {
-        id:
-          typeof crypto !== 'undefined' && crypto.randomUUID
-            ? crypto.randomUUID()
-            : String(Date.now()),
+      const payload = {
         type,
         original,
         final: computeFinal(type, original),
         name: (name || '').trim(),
         date: dateISO || new Date().toISOString(),
       };
-      // 낙관적 업데이트
-      persist((prev) => [record, ...prev]);
-
-      const { error: insErr } = await supabase.from(RECORDS_TABLE).insert(record);
+      // DB가 id를 생성하므로 insert 후 반환된 행을 화면에 반영
+      const { data, error: insErr } = await supabase
+        .from(RECORDS_TABLE)
+        .insert(payload)
+        .select()
+        .single();
       if (insErr) {
         setError(insErr.message);
-        persist((prev) => prev.filter((r) => r.id !== record.id)); // 롤백
-      } else {
-        setError(null);
+        return;
       }
+      setError(null);
+      persist((prev) => [data, ...prev]);
     },
     [persist]
   );
@@ -146,14 +137,13 @@ export const useSalesData = () => {
         snapshot = prev;
         return prev.map((r) => (r.id === id ? { ...r, ...patch } : r));
       });
-
       const { error: updErr } = await supabase
         .from(RECORDS_TABLE)
         .update(patch)
         .eq('id', id);
       if (updErr) {
         setError(updErr.message);
-        if (snapshot) persist(snapshot); // 롤백
+        if (snapshot) persist(snapshot);
       } else {
         setError(null);
       }
@@ -168,14 +158,13 @@ export const useSalesData = () => {
         snapshot = prev;
         return prev.filter((r) => r.id !== id);
       });
-
       const { error: delErr } = await supabase
         .from(RECORDS_TABLE)
         .delete()
         .eq('id', id);
       if (delErr) {
         setError(delErr.message);
-        if (snapshot) persist(snapshot); // 롤백
+        if (snapshot) persist(snapshot);
       } else {
         setError(null);
       }
@@ -183,62 +172,32 @@ export const useSalesData = () => {
     [persist]
   );
 
-  // 수동 백업: 이 기기 localStorage(+현재 화면) 기록을 모두 DB로 올린다(병합).
-  // 자동 1회 마이그레이션과 별개로, 사용자가 직접 눌러 확인할 수 있는 안전장치.
-  // 반환: { found, error } — found=발견한 로컬 기록 수, error=실패 메시지(없으면 null)
+  // 수동 백업: 이 기기 localStorage 기록을 DB로 1회 업로드(id 는 DB가 생성).
+  // 이미 백업한 기기면 중복 방지를 위해 다시 올리지 않는다.
   const backupLocalToDb = useCallback(async () => {
-    // localStorage 와 현재 state 를 합쳐 id 기준 중복 제거(로컬 우선)
-    const merged = new Map();
-    for (const r of salesData) merged.set(String(r.id), r);
-    for (const r of readCache()) merged.set(String(r.id), r);
-    const local = [...merged.values()];
-
+    if (window.localStorage.getItem(MIGRATION_FLAG)) {
+      return { found: 0, error: null, already: true };
+    }
+    const local = readCache();
     if (local.length === 0) {
       return { found: 0, error: null };
     }
-
-    const toUpsert = local.map((r) => {
-      const original = Number(r.original) || 0;
-      return {
-        id: String(r.id),
-        type: r.type,
-        original,
-        final: Number(r.final ?? computeFinal(r.type, original)),
-        name: r.name || '',
-        date: r.date,
-      };
-    });
-
-    // ignoreDuplicates:false → 로컬 내용으로 DB를 최신화(덮어쓰기 병합)
-    const { error: upErr } = await supabase
+    const { error: insErr } = await supabase
       .from(RECORDS_TABLE)
-      .upsert(toUpsert, { onConflict: 'id', ignoreDuplicates: false });
-
-    if (upErr) {
-      setError(upErr.message);
-      return { found: local.length, error: upErr.message };
+      .insert(local.map(toPayload));
+    if (insErr) {
+      setError(insErr.message);
+      return { found: local.length, error: insErr.message };
     }
-
     window.localStorage.setItem(MIGRATION_FLAG, '1');
-
-    // 병합 결과로 화면 갱신
     const { data: reloaded } = await supabase
       .from(RECORDS_TABLE)
       .select('*')
       .order('date', { ascending: false });
-    if (reloaded) persist(reloaded);
+    persist(reloaded ?? []);
     setError(null);
-
     return { found: local.length, error: null };
-  }, [salesData, persist]);
+  }, [persist]);
 
-  return {
-    salesData,
-    addRecord,
-    updateRecord,
-    deleteRecord,
-    backupLocalToDb,
-    loading,
-    error,
-  };
+  return { salesData, addRecord, updateRecord, deleteRecord, backupLocalToDb, loading, error };
 };

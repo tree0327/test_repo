@@ -29,7 +29,6 @@ export default function InputModal({ isOpen, onClose, onSave, initialType, initi
       showAlert('알림', '금액을 입력해주세요!');
       return;
     }
-    
     // name is optional
     const dateISO = date ? new Date(date + 'T12:00:00').toISOString() : null;
     onSave(initialType, Number(amount), name, dateISO);
@@ -38,9 +37,9 @@ export default function InputModal({ isOpen, onClose, onSave, initialType, initi
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-content glass" onClick={e => e.stopPropagation()}>
+      <div className="modal-content glass" onClick={(e) => e.stopPropagation()}>
         <h3>{initialType} 매출 {initialData ? '수정' : '입력'}</h3>
-        
+
         <div className="input-group">
           <label>날짜</label>
           <input
@@ -53,22 +52,22 @@ export default function InputModal({ isOpen, onClose, onSave, initialType, initi
 
         <div className="input-group">
           <label>고객명 / 메모 (선택)</label>
-          <input 
-            type="text" 
-            placeholder="예: 홍길동, VIP 등" 
-            value={name} 
-            onChange={(e) => setName(e.target.value)} 
+          <input
+            type="text"
+            placeholder="예: 홍길동, VIP 등"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
           />
         </div>
 
         <div className="input-group">
           <label>금액 (필수)</label>
-          <input 
+          <input
             type="text"
             inputMode="numeric"
-            placeholder="0" 
-            value={displayAmount} 
-            onChange={handleAmountChange} 
+            placeholder="0"
+            value={displayAmount}
+            onChange={handleAmountChange}
             autoFocus
           />
           {initialType === '카드' && amount && (
