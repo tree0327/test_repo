@@ -46,6 +46,21 @@
   border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
+.btn-backup {
+  padding: 10px 14px;
+  background-color: var(--primary);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 20px;
+  box-shadow: var(--shadow-sm);
+  border: none;
+}
+
+.btn-backup:disabled {
+  opacity: 0.6;
+}
+
 .main-buttons {
   display: flex;
   justify-content: space-between;

@@ -2,12 +2,32 @@ import { useState } from 'react';
 import { useSalesData } from './hooks/useSalesData';
 import { getSalesPeriod } from './utils/salesPeriod';
 import { supabase } from './supabaseClient';
+import { useModal } from './context/ModalContext';
 import InputModal from './components/InputModal';
 import RecordModal from './components/RecordModal';
 import './App.css';
 
 function App() {
-  const { salesData, addRecord, updateRecord, deleteRecord } = useSalesData();
+  const { salesData, addRecord, updateRecord, deleteRecord, backupLocalToDb } =
+    useSalesData();
+  const { showAlert } = useModal();
+  const [backingUp, setBackingUp] = useState(false);
+
+  const handleBackup = async () => {
+    setBackingUp(true);
+    try {
+      const { found, error } = await backupLocalToDb();
+      if (error) {
+        showAlert('백업 실패', `DB 저장 중 오류가 발생했습니다: ${error}`);
+      } else if (found === 0) {
+        showAlert('백업', '이 기기에서 올릴 기존 기록이 없습니다.');
+      } else {
+        showAlert('백업 완료', `이 기기의 기록 ${found}건을 DB에 저장했습니다.`);
+      }
+    } finally {
+      setBackingUp(false);
+    }
+  };
   
   const [modalState, setModalState] = useState({
     isOpen: false,
@@ -74,6 +94,13 @@ function App() {
       <div className="top-bar">
         <h1 className="title">매출 관리</h1>
         <div className="top-actions">
+          <button
+            className="btn-backup"
+            onClick={handleBackup}
+            disabled={backingUp}
+          >
+            {backingUp ? '백업 중…' : '기기 기록 백업'}
+          </button>
           <button className="btn-all-records" onClick={() => openRecordModal('all')}>
             전체 기록
           </button>

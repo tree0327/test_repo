@@ -182,5 +182,62 @@ export const useSalesData = () => {
     [persist]
   );
 
-  return { salesData, addRecord, updateRecord, deleteRecord, loading, error };
+  // 수동 백업: 이 기기 localStorage(+현재 화면) 기록을 모두 DB로 올린다(병합).
+  // 자동 1회 마이그레이션과 별개로, 사용자가 직접 눌러 확인할 수 있는 안전장치.
+  // 반환: { found, error } — found=발견한 로컬 기록 수, error=실패 메시지(없으면 null)
+  const backupLocalToDb = useCallback(async () => {
+    // localStorage 와 현재 state 를 합쳐 id 기준 중복 제거(로컬 우선)
+    const merged = new Map();
+    for (const r of salesData) merged.set(String(r.id), r);
+    for (const r of readCache()) merged.set(String(r.id), r);
+    const local = [...merged.values()];
+
+    if (local.length === 0) {
+      return { found: 0, error: null };
+    }
+
+    const toUpsert = local.map((r) => {
+      const original = Number(r.original) || 0;
+      return {
+        id: String(r.id),
+        type: r.type,
+        original,
+        final: Number(r.final ?? computeFinal(r.type, original)),
+        name: r.name || '',
+        date: r.date,
+      };
+    });
+
+    // ignoreDuplicates:false → 로컬 내용으로 DB를 최신화(덮어쓰기 병합)
+    const { error: upErr } = await supabase
+      .from(RECORDS_TABLE)
+      .upsert(toUpsert, { onConflict: 'id', ignoreDuplicates: false });
+
+    if (upErr) {
+      setError(upErr.message);
+      return { found: local.length, error: upErr.message };
+    }
+
+    window.localStorage.setItem(MIGRATION_FLAG, '1');
+
+    // 병합 결과로 화면 갱신
+    const { data: reloaded } = await supabase
+      .from(RECORDS_TABLE)
+      .select('*')
+      .order('date', { ascending: false });
+    if (reloaded) persist(reloaded);
+    setError(null);
+
+    return { found: local.length, error: null };
+  }, [salesData, persist]);
+
+  return {
+    salesData,
+    addRecord,
+    updateRecord,
+    deleteRecord,
+    backupLocalToDb,
+    loading,
+    error,
+  };
 };
