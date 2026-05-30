@@ -17,23 +17,23 @@ const GOAL_KEY = 'admin_monthly_goal';
 
 export default function AdminDashboard() {
   const { salesData, loading } = useSalesData();
-  const now = new Date();
+  const [now] = useState(() => new Date());
   const [goal, setGoal] = useState(() => Number(localStorage.getItem(GOAL_KEY)) || 0);
   const [rangeStart, setRangeStart] = useState('');
   const [rangeEnd, setRangeEnd] = useState('');
 
-  const kpi = useMemo(() => kpiSummary(salesData, now), [salesData]);
-  const trend = useMemo(() => monthlyTrend(salesData, 6, now), [salesData]);
-  const daily = useMemo(() => dailySales(salesData, now), [salesData]);
+  const kpi = useMemo(() => kpiSummary(salesData, now), [salesData, now]);
+  const trend = useMemo(() => monthlyTrend(salesData, 6, now), [salesData, now]);
+  const daily = useMemo(() => dailySales(salesData, now), [salesData, now]);
   const weekday = useMemo(() => byWeekday(salesData), [salesData]);
   const hours = useMemo(() => byHour(salesData), [salesData]);
-  const compare = useMemo(() => samePeriodCompare(salesData, now), [salesData]);
-  const ratio = useMemo(() => cashCardRatio(salesData, 'month', now), [salesData]);
+  const compare = useMemo(() => samePeriodCompare(salesData, now), [salesData, now]);
+  const ratio = useMemo(() => cashCardRatio(salesData, 'month', now), [salesData, now]);
   const fee = useMemo(() => cardFeeTotal(salesData, 'all'), [salesData]);
-  const ovf = useMemo(() => originalVsFinal(salesData, 'month', now), [salesData]);
+  const ovf = useMemo(() => originalVsFinal(salesData, 'month', now), [salesData, now]);
   const top5 = useMemo(() => topTransactions(salesData, 5), [salesData]);
   const customers = useMemo(() => byCustomer(salesData).slice(0, 10), [salesData]);
-  const projected = useMemo(() => forecast(salesData, now), [salesData]);
+  const projected = useMemo(() => forecast(salesData, now), [salesData, now]);
 
   const rangeSummary = useMemo(() => {
     if (!rangeStart || !rangeEnd) return null;
