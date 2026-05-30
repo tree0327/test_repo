@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useSalesData } from './hooks/useSalesData';
-import { getSalesPeriod } from './utils/salesPeriod';
+import { getSalesPeriod, getPeriodEndDay } from './utils/salesPeriod';
 import { supabase } from './supabaseClient';
 import { useModal } from './context/ModalContext';
 import InputModal from './components/InputModal';
@@ -136,7 +136,7 @@ function App() {
         className="bottom-bar glass" 
         onClick={() => openRecordModal('current')}
       >
-        <span className="period-range">{formatPeriodDate(period.start)} ~ {formatPeriodDate(period.end)}</span>
+        <span className="period-range">{formatPeriodDate(period.start)} ~ {formatPeriodDate(getPeriodEndDay(period.start))}</span>
         <span className="total-label">이번 달 누적 매출</span>
         <div className="total-amount-wrap">
           <span className="total-amount">{currentTotal.toLocaleString()}</span>

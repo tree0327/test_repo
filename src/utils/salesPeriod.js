@@ -26,3 +26,15 @@ export function getPeriodKey(dateString) {
     const m = dt.getMonth();
     return `${y}-${String(m + 1).padStart(2, '0')}`;
 }
+
+/**
+ * 정산월의 말일 Date 반환(표시용). start = 해당 월 1일.
+ * 다음달 1일에서 하루 뺀 날 = 이번 달 말일.
+ * @param {Date} start
+ * @returns {Date}
+ */
+export function getPeriodEndDay(start = new Date()) {
+    const y = start.getFullYear();
+    const m = start.getMonth();
+    return new Date(y, m + 1, 0); // day 0 = 전월(=이번달) 말일
+}
