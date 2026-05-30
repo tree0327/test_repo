@@ -68,11 +68,11 @@ function App() {
     setModalState(prev => ({ ...prev, isOpen: false }));
   };
 
-  const handleSaveSales = (type, amount, name) => {
+  const handleSaveSales = (type, amount, name, dateISO) => {
     if (modalState.isEdit) {
-      updateRecord(modalState.editId, type, amount, name);
+      updateRecord(modalState.editId, type, amount, name, dateISO);
     } else {
-      addRecord(type, amount, name);
+      addRecord(type, amount, name, dateISO);
     }
   };
 
@@ -85,8 +85,8 @@ function App() {
     setRecordModalState(prev => ({ ...prev, isOpen: false }));
   };
 
-  const handleEditFromRecord = (type, id, originalAmount, name) => {
-    openInputModal(type, true, id, { original: originalAmount, name });
+  const handleEditFromRecord = (type, id, originalAmount, name, dateISO) => {
+    openInputModal(type, true, id, { original: originalAmount, name, date: dateISO });
   };
 
   return (

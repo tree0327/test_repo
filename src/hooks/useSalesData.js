@@ -104,7 +104,7 @@ export const useSalesData = () => {
   }, [persist]);
 
   const addRecord = useCallback(
-    async (type, originalAmount, name = '') => {
+    async (type, originalAmount, name = '', dateISO = null) => {
       const original = Number(originalAmount) || 0;
       const record = {
         id:
@@ -115,7 +115,7 @@ export const useSalesData = () => {
         original,
         final: computeFinal(type, original),
         name: (name || '').trim(),
-        date: new Date().toISOString(),
+        date: dateISO || new Date().toISOString(),
       };
       // 낙관적 업데이트
       persist((prev) => [record, ...prev]);
@@ -132,7 +132,7 @@ export const useSalesData = () => {
   );
 
   const updateRecord = useCallback(
-    async (id, type, newOriginalAmount, name = '') => {
+    async (id, type, newOriginalAmount, name = '', dateISO = null) => {
       const original = Number(newOriginalAmount) || 0;
       const patch = {
         type,
@@ -140,6 +140,7 @@ export const useSalesData = () => {
         final: computeFinal(type, original),
         name: (name || '').trim(),
       };
+      if (dateISO) patch.date = dateISO;
       let snapshot;
       persist((prev) => {
         snapshot = prev;

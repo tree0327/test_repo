@@ -6,6 +6,7 @@ export default function InputModal({ isOpen, onClose, onSave, initialType, initi
   const [amount, setAmount] = useState('');
   const [displayAmount, setDisplayAmount] = useState('');
   const [name, setName] = useState('');
+  const [date, setDate] = useState('');
   const { showAlert } = useModal();
 
   useEffect(() => {
@@ -15,10 +16,12 @@ export default function InputModal({ isOpen, onClose, onSave, initialType, initi
         setAmount(val);
         setDisplayAmount(val ? Number(val).toLocaleString() : '');
         setName(initialData.name || '');
+        setDate(initialData.date ? initialData.date.slice(0, 10) : new Date().toISOString().slice(0, 10));
       } else {
         setAmount('');
         setDisplayAmount('');
         setName('');
+        setDate(new Date().toISOString().slice(0, 10));
       }
     }
   }, [isOpen, initialData]);
@@ -38,7 +41,8 @@ export default function InputModal({ isOpen, onClose, onSave, initialType, initi
     }
     
     // name is optional
-    onSave(initialType, Number(amount), name);
+    const dateISO = date ? new Date(date + 'T12:00:00').toISOString() : null;
+    onSave(initialType, Number(amount), name, dateISO);
     onClose();
   };
 
@@ -47,6 +51,16 @@ export default function InputModal({ isOpen, onClose, onSave, initialType, initi
       <div className="modal-content glass" onClick={e => e.stopPropagation()}>
         <h3>{initialType} 매출 {initialData ? '수정' : '입력'}</h3>
         
+        <div className="input-group">
+          <label>날짜</label>
+          <input
+            type="date"
+            value={date}
+            max={new Date().toISOString().slice(0, 10)}
+            onChange={(e) => setDate(e.target.value)}
+          />
+        </div>
+
         <div className="input-group">
           <label>고객명 / 메모 (선택)</label>
           <input 
