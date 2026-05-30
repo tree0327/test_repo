@@ -1,8 +1,5 @@
-import { createContext, useContext, useState, useCallback, useRef } from 'react';
-
-const ModalContext = createContext();
-
-export const useModal = () => useContext(ModalContext);
+import { useState, useCallback, useRef } from 'react';
+import { ModalContext } from './modal-context';
 
 export const ModalProvider = ({ children }) => {
   const [alertConfig, setAlertConfig] = useState({ isOpen: false, title: '', message: '' });

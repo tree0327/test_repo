@@ -34,7 +34,8 @@ function App() {
     type: '',
     isEdit: false,
     editId: null,
-    initialData: null
+    initialData: null,
+    seq: 0 // 열릴 때마다 증가 → InputModal key 로 사용해 입력값 초기화
   });
 
   const [recordModalState, setRecordModalState] = useState({
@@ -61,7 +62,7 @@ function App() {
   const openInputModal = (type, isEdit = false, id = null, initialData = null) => {
     // If editing, close record modal first if it is open
     setRecordModalState(prev => ({ ...prev, isOpen: false }));
-    setModalState({ isOpen: true, type, isEdit, editId: id, initialData });
+    setModalState(prev => ({ isOpen: true, type, isEdit, editId: id, initialData, seq: prev.seq + 1 }));
   };
 
   const closeInputModal = () => {
@@ -152,7 +153,8 @@ function App() {
         <span className="click-hint">터치해서 기록 확인 및 수정</span>
       </div>
 
-      <InputModal 
+      <InputModal
+        key={modalState.seq}
         isOpen={modalState.isOpen}
         onClose={closeInputModal}
         onSave={handleSaveSales}

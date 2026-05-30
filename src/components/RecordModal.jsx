@@ -1,4 +1,4 @@
-import { useModal } from '../context/ModalContext';
+import { useModal } from '../context/modal-context';
 import { getSalesPeriod, getPeriodKey } from '../utils/salesPeriod';
 import { useState } from 'react';
 import './RecordModal.css';

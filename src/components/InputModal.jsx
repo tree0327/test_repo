@@ -1,30 +1,20 @@
-import { useState, useEffect } from 'react';
-import { useModal } from '../context/ModalContext';
+import { useState } from 'react';
+import { useModal } from '../context/modal-context';
 import './InputModal.css';
 
+// 부모(App)에서 열 때마다 key 를 바꿔 리마운트하므로,
+// 초기값은 useState 초기화 함수로 props 에서 한 번만 계산한다(effect 불필요).
 export default function InputModal({ isOpen, onClose, onSave, initialType, initialData }) {
-  const [amount, setAmount] = useState('');
-  const [displayAmount, setDisplayAmount] = useState('');
-  const [name, setName] = useState('');
-  const [date, setDate] = useState('');
+  const initialAmount = initialData ? String(initialData.original || '') : '';
+  const [amount, setAmount] = useState(initialAmount);
+  const [displayAmount, setDisplayAmount] = useState(
+    initialAmount ? Number(initialAmount).toLocaleString() : ''
+  );
+  const [name, setName] = useState(initialData?.name || '');
+  const [date, setDate] = useState(
+    initialData?.date ? initialData.date.slice(0, 10) : new Date().toISOString().slice(0, 10)
+  );
   const { showAlert } = useModal();
-
-  useEffect(() => {
-    if (isOpen) {
-      if (initialData) {
-        const val = String(initialData.original || '');
-        setAmount(val);
-        setDisplayAmount(val ? Number(val).toLocaleString() : '');
-        setName(initialData.name || '');
-        setDate(initialData.date ? initialData.date.slice(0, 10) : new Date().toISOString().slice(0, 10));
-      } else {
-        setAmount('');
-        setDisplayAmount('');
-        setName('');
-        setDate(new Date().toISOString().slice(0, 10));
-      }
-    }
-  }, [isOpen, initialData]);
 
   if (!isOpen) return null;
 

@@ -697,7 +697,7 @@ with new_user as (
   ) values (
     '00000000-0000-0000-0000-000000000000',
     gen_random_uuid(), 'authenticated', 'authenticated', 'admin@moha.local',
-    crypt('Admin-Temp-1234', gen_salt('bf')), now(), now(), now(),
+    crypt('1234', gen_salt('bf')), now(), now(), now(),
     '{"provider":"email","providers":["email"]}',
     '{"role":"admin"}',
     '', '', '', ''
