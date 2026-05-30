@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useSalesData } from './hooks/useSalesData';
 import { getSalesPeriod } from './utils/salesPeriod';
+import { supabase } from './supabaseClient';
 import InputModal from './components/InputModal';
 import RecordModal from './components/RecordModal';
 import './App.css';
@@ -72,9 +73,14 @@ function App() {
     <div className="app-container">
       <div className="top-bar">
         <h1 className="title">매출 관리</h1>
-        <button className="btn-all-records" onClick={() => openRecordModal('all')}>
-          전체 기록
-        </button>
+        <div className="top-actions">
+          <button className="btn-all-records" onClick={() => openRecordModal('all')}>
+            전체 기록
+          </button>
+          <button className="btn-logout" onClick={() => supabase.auth.signOut()}>
+            로그아웃
+          </button>
+        </div>
       </div>
 
       <div className="main-buttons">
