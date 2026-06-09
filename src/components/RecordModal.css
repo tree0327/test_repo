@@ -255,3 +255,14 @@
   font-size: 17px;
   font-weight: 700;
 }
+
+/* 중첩 드릴다운 단계별 들여쓰기/구분 */
+.accordion-group.depth-week { margin-bottom: 8px; }
+.accordion-group.depth-day { margin-bottom: 6px; }
+.depth-week > .accordion { background-color: rgba(0, 122, 255, 0.06); }
+.depth-day > .accordion { background-color: rgba(0, 0, 0, 0.03); }
+.depth-week > .accordion .period-label,
+.depth-day > .accordion .period-label { font-size: 13px; }
+.depth-week > .accordion .accordion-total,
+.depth-day > .accordion .accordion-total { font-size: 15px; }
+.panel .panel { padding-right: 0; padding-left: 8px; border-left: 2px solid rgba(0, 0, 0, 0.06); }

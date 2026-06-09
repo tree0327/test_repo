@@ -1,9 +1,77 @@
 import { useModal } from '../context/modal-context';
-import { getSalesPeriod, getPeriodKey } from '../utils/salesPeriod';
+import { getSalesPeriod } from '../utils/salesPeriod';
+import { groupByMonth, groupByWeek, groupByDay } from '../utils/analytics';
 import { useState } from 'react';
 import './RecordModal.css';
 import FilterButtons from './FilterButtons';
 import RecordItem from './RecordItem';
+
+const NEXT_LEVEL = { month: 'week', week: 'day' };
+const GROUPER = { month: groupByMonth, week: groupByWeek, day: groupByDay };
+
+function DrillGroups({
+  records, level, parentKey, monthIndexMap,
+  openPanels, togglePanel, panelFilters, setPanelFilter, onEdit, onDelete,
+}) {
+  const groups = GROUPER[level](records);
+  return groups.map((g) => {
+    const key = parentKey ? `${parentKey}|${g.key}` : g.key;
+    const filter = panelFilters[key] || '전체';
+    const filteredItems = filter === '전체' ? g.items : g.items.filter((i) => i.type === filter);
+    const isLeaf = level === 'day';
+    const monthBadge = level === 'month' ? `${monthIndexMap[g.key]}개월차` : null;
+    const titleLabel = level === 'month' ? `${g.label} 주기`
+      : level === 'week' ? `${g.label} (${g.rangeLabel})`
+        : g.label;
+
+    return (
+      <div key={key} className={`accordion-group depth-${level}`}>
+        <button className="accordion" onClick={() => togglePanel(key)}>
+          <div className="accordion-title">
+            {monthBadge && <span className="month-badge">{monthBadge}</span>}
+            <span className="period-label">{titleLabel}</span>
+          </div>
+          <div className="accordion-right">
+            <span className="accordion-total">{g.total.toLocaleString()}원</span>
+            <div className="accordion-sub-totals">
+              <span className="accordion-cash">현금 {g.cash.toLocaleString()}</span>
+              <span className="accordion-divider">/</span>
+              <span className="accordion-card">카드 {g.card.toLocaleString()}</span>
+            </div>
+          </div>
+        </button>
+
+        {openPanels[key] && (
+          <div className="panel slide-down">
+            <FilterButtons activeFilter={filter} onFilterChange={(f) => setPanelFilter(key, f)} />
+            {isLeaf ? (
+              filteredItems.length === 0 ? (
+                <div className="empty-state small"><div>해당 결제 수단의 기록이 없습니다.</div></div>
+              ) : (
+                filteredItems.map((item) => (
+                  <RecordItem key={item.id} item={item} showActions={true} onEdit={onEdit} onDelete={onDelete} />
+                ))
+              )
+            ) : (
+              <DrillGroups
+                records={filteredItems}
+                level={NEXT_LEVEL[level]}
+                parentKey={key}
+                monthIndexMap={monthIndexMap}
+                openPanels={openPanels}
+                togglePanel={togglePanel}
+                panelFilters={panelFilters}
+                setPanelFilter={setPanelFilter}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
+            )}
+          </div>
+        )}
+      </div>
+    );
+  });
+}
 
 export default function RecordModal({ isOpen, onClose, viewType, salesData, onDelete, onEdit }) {
   const [openPanels, setOpenPanels] = useState({});
@@ -60,7 +128,7 @@ export default function RecordModal({ isOpen, onClose, viewType, salesData, onDe
       </>
     );
   } else {
-    // all view
+    // all view: 월 → 주 → 일 → 거래 중첩 드릴다운
     if (salesData.length === 0) {
       content = (
         <div className="empty-state">
@@ -69,58 +137,28 @@ export default function RecordModal({ isOpen, onClose, viewType, salesData, onDe
         </div>
       );
     } else {
-      const groups = {};
-      salesData.forEach(item => {
-        const key = getPeriodKey(item.date);
-        if (!groups[key]) groups[key] = [];
-        groups[key].push(item);
-      });
+      // N개월차 라벨: 오래된 달이 1개월차
+      const monthKeys = [...new Set(salesData.map((r) => {
+        const d = new Date(r.date);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      }))].sort();
+      const monthIndexMap = {};
+      monthKeys.forEach((k, i) => { monthIndexMap[k] = i + 1; });
 
-      const sortedKeys = Object.keys(groups).sort().reverse();
-      
-      content = sortedKeys.map((key, index) => {
-        const monthIndex = sortedKeys.length - index;
-        const periodItems = groups[key].sort((a, b) => new Date(b.date) - new Date(a.date));
-        const periodTotal = periodItems.reduce((sum, item) => sum + item.final, 0);
-        const cashTotal = periodItems.filter(i => i.type === '현금').reduce((sum, i) => sum + i.final, 0);
-        const cardTotal = periodItems.filter(i => i.type === '카드').reduce((sum, i) => sum + i.final, 0);
-        const [year, month] = key.split('-');
-        
-        const panelFilter = panelFilters[key] || '전체';
-        const filteredItems = panelFilter === '전체' ? periodItems : periodItems.filter(item => item.type === panelFilter);
-
-        return (
-          <div key={key} className="accordion-group">
-            <button className="accordion" onClick={() => togglePanel(key)}>
-              <div className="accordion-title">
-                <span className="month-badge">{monthIndex}개월차</span>
-                <span className="period-label">{year}년 {parseInt(month)}월 주기</span>
-              </div>
-              <div className="accordion-right">
-                <span className="accordion-total">{periodTotal.toLocaleString()}원</span>
-                <div className="accordion-sub-totals">
-                  <span className="accordion-cash">현금 {cashTotal.toLocaleString()}</span>
-                  <span className="accordion-divider">/</span>
-                  <span className="accordion-card">카드 {cardTotal.toLocaleString()}</span>
-                </div>
-              </div>
-            </button>
-            
-            {openPanels[key] && (
-              <div className="panel slide-down">
-                <FilterButtons activeFilter={panelFilter} onFilterChange={(f) => setPanelFilter(key, f)} />
-                {filteredItems.length === 0 ? (
-                  <div className="empty-state small">
-                    <div>해당 결제 수단의 기록이 없습니다.</div>
-                  </div>
-                ) : (
-                  filteredItems.map(item => <RecordItem key={item.id} item={item} showActions={true} onEdit={onEdit} onDelete={handleDelete} />)
-                )}
-              </div>
-            )}
-          </div>
-        );
-      });
+      content = (
+        <DrillGroups
+          records={salesData}
+          level="month"
+          parentKey=""
+          monthIndexMap={monthIndexMap}
+          openPanels={openPanels}
+          togglePanel={togglePanel}
+          panelFilters={panelFilters}
+          setPanelFilter={setPanelFilter}
+          onEdit={onEdit}
+          onDelete={handleDelete}
+        />
+      );
     }
   }
 
