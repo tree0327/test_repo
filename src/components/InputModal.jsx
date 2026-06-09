@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useModal } from '../context/modal-context';
+import { finalAmount, CARD_FEE_RATE } from '../utils/fee.js';
 import './InputModal.css';
 
 // 부모(App)에서 열 때마다 key 를 바꿔 리마운트하므로,
@@ -72,7 +73,7 @@ export default function InputModal({ isOpen, onClose, onSave, initialType, initi
           />
           {initialType === '카드' && amount && (
             <div className="fee-notice">
-              수수료 10% 차감 후: <strong>{Math.floor(Number(amount) * 0.9).toLocaleString()}원</strong>
+              수수료 {(CARD_FEE_RATE * 100).toFixed(1)}% 차감 후: <strong>{finalAmount('카드', Number(amount)).toLocaleString()}원</strong>
             </div>
           )}
         </div>

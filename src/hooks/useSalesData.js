@@ -1,15 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase, RECORDS_TABLE } from '../supabaseClient';
+import { finalAmount } from '../utils/fee.js';
 
 // 주 저장소: Supabase. localStorage 는 오프라인 캐시 + 기존 데이터 1회 마이그레이션.
 // id 는 DB가 자동 증가(인덱스 번호)로 생성하므로, 클라이언트는 id 를 만들어 보내지 않는다.
 const CACHE_KEY = 'salesData';
 const MIGRATION_FLAG = 'salesData_migrated_to_supabase';
-
-// 결제수단별 최종액: 현금=원금, 카드=수수료 10% 차감
-function computeFinal(type, original) {
-  return type === '현금' ? original : Math.floor(original * 0.9);
-}
 
 // localStorage 기록 → DB insert 페이로드(id 제외, DB가 생성)
 function toPayload(r) {
@@ -17,7 +13,7 @@ function toPayload(r) {
   return {
     type: r.type,
     original,
-    final: Number(r.final ?? computeFinal(r.type, original)),
+    final: Number(r.final ?? finalAmount(r.type, original)),
     name: r.name || '',
     date: r.date,
   };
@@ -102,7 +98,7 @@ export const useSalesData = () => {
       const payload = {
         type,
         original,
-        final: computeFinal(type, original),
+        final: finalAmount(type, original),
         name: (name || '').trim(),
         date: dateISO || new Date().toISOString(),
       };
@@ -128,7 +124,7 @@ export const useSalesData = () => {
       const patch = {
         type,
         original,
-        final: computeFinal(type, original),
+        final: finalAmount(type, original),
         name: (name || '').trim(),
       };
       if (dateISO) patch.date = dateISO;

@@ -1,3 +1,5 @@
+import { CARD_FEE_RATE } from '../utils/fee.js';
+
 // YY.MM.DD HH:MM 형식 (예: 26.05.30 14:05)
 function formatDateTime(isoString) {
   const dt = new Date(isoString);
@@ -19,7 +21,7 @@ export default function RecordItem({ item, showActions = true, onEdit, onDelete 
       <div className="sub-row">
         <span>
           {formatDateTime(item.date)}
-          {item.type === '카드' ? ` (원금: ${item.original.toLocaleString()}원, 수수료 10% 차감)` : ''}
+          {item.type === '카드' ? ` (원금: ${item.original.toLocaleString()}원, 수수료 ${(CARD_FEE_RATE * 100).toFixed(1)}% 차감)` : ''}
         </span>
         {showActions && (
           <div className="action-btns">
