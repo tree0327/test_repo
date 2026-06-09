@@ -5,6 +5,7 @@ import {
   kpiSummary, monthlyTrend, dailySales, byWeekday, byHour, samePeriodCompare,
   cashCardRatio, cardFeeTotal, originalVsFinal, topTransactions, byCustomer,
   forecast, toCSV, filterByRange,
+  weeklyTrend, weeksInMonth, dayDetail,
 } from '../utils/analytics';
 import './AdminDashboard.css';
 
@@ -52,6 +53,13 @@ export default function AdminDashboard() {
   const top5 = useMemo(() => topTransactions(salesData, 5), [salesData]);
   const customers = useMemo(() => byCustomer(salesData).slice(0, 10), [salesData]);
   const projected = useMemo(() => forecast(salesData, now), [salesData, now]);
+  const weekly = useMemo(() => weeklyTrend(salesData, 8, now), [salesData, now]);
+  const monthWeeks = useMemo(() => weeksInMonth(salesData, now), [salesData, now]);
+  const [selectedDay, setSelectedDay] = useState(null); // 1~말일 또는 null
+  const dayInfo = useMemo(
+    () => (selectedDay ? dayDetail(salesData, new Date(now.getFullYear(), now.getMonth(), selectedDay)) : null),
+    [salesData, now, selectedDay]
+  );
 
   const rangeSummary = useMemo(() => {
     if (!rangeStart || !rangeEnd) return null;
@@ -89,6 +97,8 @@ export default function AdminDashboard() {
   const hourData = hours
     .filter((h) => h.total > 0)
     .map((h) => ({ label: `${h.hour}시`, value: h.total }));
+  const weeklyData = weekly.map((w) => ({ label: w.label.split('~')[0], value: w.total }));
+  const monthWeeksMax = Math.max(1, ...monthWeeks.map((w) => w.total));
   const ratioTotal = ratio.cash + ratio.card || 1;
 
   return (
@@ -132,7 +142,79 @@ export default function AdminDashboard() {
 
       <div className="admin-section">
         <h2>이번 달 일별 매출</h2>
-        <BarChartLite data={dailyData} color="#34c759" />
+        <div className="barchart">
+          {dailyData.map((d) => {
+            const max = Math.max(1, ...dailyData.map((x) => x.value));
+            const day = Number(d.label);
+            const isSel = selectedDay === day;
+            return (
+              <div className="barchart-col" key={d.label}>
+                <div
+                  className={`barchart-track clickable${isSel ? ' selected' : ''}`}
+                  role="button"
+                  tabIndex={0}
+                  title={`${d.label}일: ${d.value.toLocaleString()}원`}
+                  onClick={() => setSelectedDay(isSel ? null : day)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setSelectedDay(isSel ? null : day);
+                    }
+                  }}
+                >
+                  <div
+                    className="barchart-bar"
+                    style={{ height: `${(d.value / max) * 100}%`, background: isSel ? '#ff9500' : '#34c759' }}
+                  />
+                </div>
+                <span className="barchart-label">{d.label}</span>
+              </div>
+            );
+          })}
+        </div>
+        {dayInfo && (
+          <div className="day-detail">
+            <div className="day-detail-head">
+              <strong>{now.getMonth() + 1}월 {selectedDay}일</strong>
+              <button className="day-detail-close" onClick={() => setSelectedDay(null)} aria-label="닫기">✕</button>
+            </div>
+            <div className="compare-row">
+              <div><span>합계</span><strong>{won(dayInfo.total)}</strong></div>
+              <div><span>건수</span><strong>{dayInfo.count}건</strong></div>
+              <div><span>현금 {dayInfo.cashPct}%</span><strong>{won(dayInfo.cash)}</strong></div>
+              <div><span>카드 {dayInfo.cardPct}%</span><strong>{won(dayInfo.card)}</strong></div>
+            </div>
+            <ul className="rank-list day-detail-list">
+              {dayInfo.items.map((r) => (
+                <li key={r.id}>
+                  <span>{new Date(r.date).toTimeString().slice(0, 5)} · {r.type}{r.name ? ` · ${r.name}` : ''}</span>
+                  <strong>{won(r.final)}</strong>
+                </li>
+              ))}
+              {dayInfo.count === 0 && <li className="muted">거래 없음</li>}
+            </ul>
+          </div>
+        )}
+      </div>
+
+      <div className="admin-section">
+        <h2>최근 8주 매출 추이</h2>
+        <BarChartLite data={weeklyData} color="#5ac8fa" />
+      </div>
+
+      <div className="admin-section">
+        <h2>이번 달 주차별 매출</h2>
+        <ul className="rank-list">
+          {monthWeeks.map((w) => (
+            <li key={w.label} className="week-row">
+              <span className="week-label">{w.label} <em>{w.rangeLabel}</em></span>
+              <div className="week-bar-wrap">
+                <div className="week-bar" style={{ width: `${(w.total / monthWeeksMax) * 100}%` }} />
+              </div>
+              <strong>{won(w.total)}</strong>
+            </li>
+          ))}
+        </ul>
       </div>
 
       <div className="admin-section">

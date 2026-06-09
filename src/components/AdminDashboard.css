@@ -103,3 +103,25 @@
 }
 .ratio-cash { background: var(--success); }
 .ratio-card { background: var(--primary); }
+
+/* 일별 드릴다운 */
+.barchart-track.clickable { cursor: pointer; outline: none; }
+.barchart-track.clickable:focus-visible { box-shadow: 0 0 0 2px var(--primary); border-radius: 4px; }
+.barchart-track.selected .barchart-bar { box-shadow: 0 0 0 2px #ff9500; }
+.day-detail {
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--input-bg);
+}
+.day-detail-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.day-detail-head strong { font-size: 15px; font-weight: 800; }
+.day-detail-close { border: none; background: transparent; font-size: 16px; cursor: pointer; color: var(--text-secondary); }
+.day-detail-list { margin-top: 12px; }
+
+/* 주차별 매출 행 */
+.week-row { align-items: center; gap: 10px; }
+.week-label { flex: 0 0 auto; min-width: 92px; font-weight: 700; }
+.week-label em { font-style: normal; font-weight: 500; color: var(--text-secondary); font-size: 11px; }
+.week-bar-wrap { flex: 1; height: 10px; background: var(--input-bg); border-radius: 6px; overflow: hidden; }
+.week-bar { height: 100%; background: var(--primary); border-radius: 6px; transition: width 0.3s; }
